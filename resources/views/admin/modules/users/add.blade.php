@@ -1,0 +1,80 @@
+@extends('admin.main')
+
+@section('extra-lib')
+    {!! HTML::script('public/backend/plugins/datatables/jquery.dataTables.min.js') !!}
+    {!! HTML::script('public/backend/plugins/datatables/dataTables.bootstrap.min.js') !!}
+    <script type="text/javascript">
+        $(function () {
+            $("#example1").DataTable({
+                "language": {
+                    "lengthMenu": "Hiển thị _MENU_ kết quả trên một trang",
+                    "zeroRecords": "<div class='text-danger text-center'>Không có dữ liệu</div>",
+                    "info": "Hiển thị trang số : _PAGE_  - Trong số : _PAGES_ trang",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": "(filtered from _MAX_ total records)"
+                }
+            });
+            //$('[data-toggle="tooltip"]').tooltip();
+        });
+    </script>
+
+    <script type="text/javascript">
+        function getFormInfo(id) {
+            if(typeof(id) == 'undefined') {
+                id = '';
+            }
+           // console.log(id);
+            $.ajax({
+                url: '{!! route("admin.sizes.getForm") !!}?id='+id,
+                type: 'GET',
+            })
+            .done(function(output) {
+                console.log(output);
+                if(typeof(output.data) == 'undefined'){
+                    if ($('input[name=id]').length) {
+                        $('input[name=id]').remove();
+                    }
+                   
+                    $('#size').val('');
+                    $('.description').html(output.description).css('color', 'green');
+                } else {
+                    if ($('input[name=id]').length) {
+                        $('input[name=id]').val(output.data.id);
+                    } else {
+                        $('#header-postForm').append('<input type="hidden" name="id" value="' + output.data.id + '" id="id" >');
+                    }
+                  
+                    $('.description').html(output.description).css('color', 'rgb(255, 179, 0)');
+                    $('#size').val(output.data.size);
+                    $('.category_id').val(output.cate);
+                }
+            })          
+        }
+
+        function postDelete(id){
+        // console.log(id);
+            $('#confirm').modal().one('click', '#delete', function(e){
+                $.ajax({
+                    url: '{!! route("admin.sizes.getDel") !!}',
+                    type: 'GET',
+                    data: {id : id},
+                    success: function(output){
+                    console.log(output);
+                        $('.messages').html(output.description);
+                        $('#getMessages').modal('toggle');
+                        $('#tr_'+id).remove();
+                    }
+                });
+            });
+        }
+    </script>
+
+@stop
+
+@section('extra-style')
+    {!! HTML::style('public/backend/plugins/datatables/dataTables.bootstrap.css') !!}
+@stop
+
+@section('content')
+    
+@stop

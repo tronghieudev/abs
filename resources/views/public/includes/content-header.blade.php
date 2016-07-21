@@ -1,0 +1,37 @@
+<header>
+    <div class="header-container">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-5 col-md-2 col-sm-3 col-xs-12 logo-block">
+                    <!-- Header Logo -->
+                    <div class="logo"> 
+                        <a title="Magento Commerce" href="index-2.html">
+                            {!! HTML::decode(HTML::link(route('public.getIndex'), HTML::image('public/frontend/images/logo.png'))) !!}
+                        </a> 
+                    </div>
+                    <!-- End Header Logo --> 
+                </div>
+                <!-- Header Language -->
+                <div class="col-xs-12 col-sm-9 col-md-9 col-lg-7 pull-right hidden-xs">
+                    
+                    <!-- End Header Currency -->
+                    <div class="welcome-msg hidden-xs"> Aspire thiên đường mua sắm !</div>
+                    <!-- Header Top Links -->
+                    <div class="toplinks">
+                        <div class="links">
+                            @if(Auth::check() && Auth::user()->level() == 4)
+                                <div class="myaccount"><a title="My Account" href="{!! route('public.users.getIndex') !!}"><span class="hidden-xs">Thông tin tài khoản</span></a> </div>
+                                <div class="myaccount"><a title="My Account" href="login.html"><span class="hidden-xs">{!! Auth::user()->name !!}</span></a> </div>
+                            @else
+                                <div class="login"><a href="login.html"><span class="hidden-xs">Đăng ký</span></a> </div>
+                                <div class="login"><a href="login.html"><span class="hidden-xs">Đăng nhập</span></a> </div>
+                            @endif
+                        </div>
+                    </div>
+                    <!-- End Header Top Links --> 
+                </div>
+            </div>
+        </div>
+    </div>
+
+</header>

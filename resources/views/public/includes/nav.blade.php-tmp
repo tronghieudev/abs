@@ -1,0 +1,125 @@
+<nav>
+    <div class="container">
+        <div>
+            <div class="col-lg-2 col-md-3 col-sm-3 col-xs-12 hidden-xs nav-icon">
+                <div class="mega-container visible-lg visible-md visible-sm">
+                    <div class="navleft-container">
+                        <div class="mega-menu-title">
+                            <h3><i class="fa fa-navicon"></i> Tất cả danh mục</h3>
+                        </div>
+                        <div class="mega-menu-category">
+                            <ul class="nav">
+                                <li class="nosub">
+                                    {!! HTML::decode(HTML::link(route('public.getIndex'), '<i class="fa fa-home"></i> Trang chủ')) !!}
+                                </li>
+
+                                @foreach($category as $cat)
+                                <li>
+                                    {!! HTML::decode(HTML::link(route('public.categories.getIndex', ['id' => $cat->id]), '<i class="fa fa-home"></i> '.$cat->name_category)) !!}
+                                    <div class="wrap-popup">
+                                        <div class="popup">
+                                            <div class="row">
+                                                @if(!empty($cat))
+                                                    @foreach($cat->children as $cat2)
+                                            <div class="col-md-4 col-sm-6">
+                                                {!! HTML::decode(HTML::link(route('public.categories.getIndex', ['id' => $cat2->id]), $cat2->name_category, ['style' => 'font-weight: bold;'])) !!}
+                                                <ul class="nav">
+                                                    @if(!empty($cat2))
+                                                        @foreach($cat2->children as $cat3)
+                                                        <li>
+                                                            {!! HTML::decode(HTML::link(route('public.categories.getIndex', ['id' => $cat3->id]), '<span>'.$cat3->name_category.'</span>')) !!}
+                                                        </li>
+                                                        @endforeach
+                                                    @endif
+                                                </ul>
+                                            </div>
+                                                    @endforeach
+                                                @endif
+                                            </div>
+                                            <br>
+                                        </div>
+                                    </div>
+                                </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7 col-md-5 col-sm-5 col-xs-3 hidden-xs category-search-form">
+                <div class="search-box">
+                    {!! Form::open(['url' => route('public.searchs.getIndex'), 'method' => 'GET']) !!}
+<?php
+
+$menuNew = new MenuSelect();
+$menu    = $menuNew->getMenu($category, 'cat', 0, ['class' => 'cate-dropdown hidden-sm hidden-md', 'id' => 'cat']);
+?>
+
+                            {!! $menu !!}
+                        <!-- Autocomplete End code -->
+                        <input id="search" type="text" name="tag" value="" placeholder="Tìm kiếm sản phẩm" class="searchbox" maxlength="128">
+                        <button type="submit" title="Search" class="search-btn-bg" id="submit-button"><span>Search</span></button>
+                    {!! Form::close() !!}
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12 card_wishlist_area">
+                <div class="mm-toggle-wrap">
+                    <div class="mm-toggle"><i class="fa fa-align-justify"></i><span class="mm-label">Menu</span> </div>
+                </div>
+                <div class="top-cart-contain">
+                    <!-- Top Cart -->
+                    <div class="mini-cart">
+                        <div data-toggle="dropdown" data-hover="dropdown" class="basket dropdown-toggle"> <a href="{!! route('public.carts.getIndex') !!}"><span class="price">Giỏ hàng</span> <span class="cart_count">
+                            @if(session()->has('cart'))
+                            {!! count(session()->get('cart')) !!}
+                            @else
+                            0
+                            @endif
+                            </span> </a>
+                        </div>
+                        <div>
+                            <div class="top-cart-content">
+                                <!--block-subtitle-->
+                                <ul class="mini-products-list" id="cart-sidebar">
+                                    @if(session()->has('cart'))
+                                    @foreach(session()->get('cart') as $value)
+                                    <li class="item first">
+                                        <div class="item-inner">
+                                            {!! HTML::decode(HTML::link('#', HTML::image('public/multimedia/images/products/'.$value['image'], $value['name_product']), ['class' => 'product-image'])) !!}
+                                            <div class="product-details">
+                                                <div class="access">
+                                                    <strong>{!! $value['value'] !!}</strong> x <span class="price">{!! $value['price_buy'] !!} đ</span>
+                                                    <p class="product-name"><a href="#">{!! $value['name_product'] !!}</a> </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    @endforeach
+                                    @endif
+                                </ul>
+                                <!--actions-->
+                                <div class="actions">
+                                    {!! HTML::decode(HTML::link(route('public.orders.getIndex'), '<span>Thanh toán</span>', ['class' => 'view-cart', 'title' => 'Thanh toán', 'style' => 'margin-right:5px; float: none;'])) !!}
+                                    {!! HTML::decode(HTML::link(route('public.carts.getIndex'), '<span>Xem giỏ hàng</span>', ['class' => 'view-cart', 'title' => 'Xem giỏ hàng'])) !!}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Top Cart -->
+                    <div id="ajaxconfig_info" style="display:none"> <a href="#/"></a>
+                        <input value="" type="hidden">
+                        <input id="enable_module" value="1" type="hidden">
+                        <input class="effect_to_cart" value="1" type="hidden">
+                        <input class="title_shopping_cart" value="Go to shopping cart" type="hidden">
+                    </div>
+                </div>
+                <!-- mgk wishlist -->
+                <div class="mgk-wishlist">
+                    <a title="My Wishlist" href="wishlist.html">
+                        <i class="fa fa-heart"></i><span class="title-wishlist hidden-xs">Wishlist</span> <!--<span class="wishlist_count">1</span>-->
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>

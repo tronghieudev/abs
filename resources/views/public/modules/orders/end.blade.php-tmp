@@ -1,0 +1,118 @@
+@extends('public.main')
+
+@section('extra-style')
+	<style type="text/css">
+		table {
+			width: 100%;
+		}
+		table td{
+			padding: 10px 0;
+		}
+		table thead tr {
+			font-weight: bold;
+		}
+	</style>
+@stop
+
+@section('content')
+	<div class="breadcrumbs">
+		<div class="container">
+			<div class="row">
+				<div class="col-xs-12">
+					{!! Breadcrumbs::render('order') !!}
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<section class="main-container col1-layout">
+		<div class="main container">
+			<div class="col-main">
+				<section class="col-sm-7">
+					<div class="block block-progress">
+						<div class="block-title ">Hoàn tất thanh toán</div>
+						{!! Form::open(['url' => route('public.orders.postEnd'), 'method' => 'POST']) !!}
+							<div class="col-sm-12">
+									<div class="radio">
+									<label>
+										<input type="radio" name="" value="1">
+										Thanh toán trực tuyến (Chưa được đưa vào sử dụng).
+									</label>
+								</div>
+								<div class="radio">
+									<label>
+										<input type="radio" name="phuong_thuc" value="2">
+										Thanh toán trả sau
+									</label>
+								</div>
+								<div class="radio">
+									<label>
+										<input type="radio" checked="checked" name="phuong_thuc" value="3">
+										Thanh toán trả trước
+									</label>
+								</div>
+								<button type="submit" style="    margin-bottom: 10px;" class="btn btn-success pull-right">Hoàn tất</button>
+								<div class="clearfix"></div>
+							</div>
+							<div class="clearfix"></div>
+						{!! Form::close() !!}
+					</div>
+				</section>
+
+				<aside class="col-right sidebar col-sm-5 wow bounceInUp animated">
+					<div class="block block-progress">
+						<div class="block-title ">Thông tin đơn hàng</div>
+						<div class="block-content">
+							<table>
+								<thead>
+									<tr>
+										<td>
+											Tên sản phẩm
+										</td>
+										<td>
+											Giá sản phẩm
+										</td>
+										<td>
+											Số lượng
+										</td>
+										<td>
+											Thành tiền
+										</td>
+									</tr>
+								</thead>
+<?php
+$total = 0;
+?>
+@if(!empty($orders))
+									@foreach($orders as $order)
+										<tr>
+											<td>
+												{!! $order['name_product'] !!}
+											</td>
+											<td>
+												{!! $order['price_buy'] !!}
+											</td>
+											<td>
+												{!! $order['value'] !!}
+											</td>
+											<td>{!! number_format($order['price_buy'] * $order['value']) !!} đ</td>
+										</tr>
+<?php
+$total += $order['price_buy']*$order['value'];
+?>
+@endforeach
+								@endif
+								<tfoot>
+									<td></td>
+									<td></td>
+									<td>Tổng tiền</td>
+									<td>{!! number_format($total) !!} đ</td>
+								</tfoot>
+							</table>
+						</div>
+					</div>
+				</aside>
+			</div>
+		</div>
+	</section>
+@stop

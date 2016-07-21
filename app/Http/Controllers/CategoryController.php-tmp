@@ -1,0 +1,119 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Category;
+
+use App\Product;
+use App\Search;
+
+use Illuminate\Http\Request;
+
+use Illuminate\Support\Facades\Response;
+
+class CategoryController extends Controller {
+
+	protected $child = [];
+
+	public function getIndex(Request $request, $id) {
+		//dd($id);
+		$allCat    = $this->getChild($id);
+		$cat       = Category::find($id);
+		$parent_id = $this->getParent($id);
+		$searchs   = Search::where('category_id', $parent_id)->first();
+
+		if (count($cat)) {
+			try {
+				$categories = Category::tree();
+				$product    = Product::where(function ($query) use ($allCat, $cat) {
+						$query->where('category_id', $cat->id);
+						foreach ($allCat as $value) {
+							$query->orWhere('category_id', $value);
+						}
+					})->where('status', 1);
+
+				if (!empty($request->price)) {
+					$price = $request->price;
+
+					$product = $product->where(function ($query) use ($price) {
+							for ($i = 0; $i < count($price); $i++) {
+								$arr = explode('|', $price[$i]);
+								//dd($arr);
+
+								if (empty($arr[0]) OR empty($arr[1])) {
+									if (strpos($price[$i], '|') > 0) {
+										$query->orWhere('price_buy', '<=', $arr[0]);
+									} else {
+										$query->orWhere('price_buy', '>=', $arr[1]);
+									}
+								} else {
+									$query->orWhere('price_buy', '>=', $arr[0])->where('price_buy', '<=', $arr[1]);
+								}
+							}
+						});
+				}
+
+				if (!empty($request->color)) {
+					$color = $request->color;
+
+					$product = $product->whereHas('colors', function ($q) use ($color) {
+							$q->where(function ($query) use ($color) {
+									for ($i = 0; $i < count($color); $i++) {
+										$query->orWhere('color_id', $color[$i]);
+									}
+								});
+						});
+				}
+
+				if (!empty($request->size)) {
+					$size = $request->size;
+
+					$product = $product->whereHas('sizes', function ($q) use ($size) {
+							$q->where(function ($query) use ($size) {
+									for ($i = 0; $i < count($size); $i++) {
+										$query->orWhere('size_id', $size[$i]);
+									}
+								});
+						});
+				}
+
+				if ($request->ajax()) {
+					$products = $product->where('value''>', 0)->orderBy('id', 'DESC')->paginate(4);
+					return response()->json(view()->make('public.modules.categories.ajax.paginate1', ['products' => $products])->render());
+				} else {
+					$products = $product->where('value', '>', 0)->orderBy('id', 'DESC')->paginate(4);
+					return view()->make('public.modules.categories.index', ['products' => $products, 'categories' => $categories])->with('cat', $cat)->with('searchs', $searchs);
+				}
+			} catch (Exception $e) {
+				return abort(503);
+			}
+		} else {
+			return abort(503);
+		}
+	}
+
+	public function getChild($id) {
+
+		$categories = Category::where('parent_id', $id)->get();
+		if ($categories->count()) {
+			foreach ($categories as $value) {
+				$this->child[] = $value->id;
+				$this->getChild($value->id);
+			}
+		}
+		return $this->child;
+
+	}
+
+	public function getParent($id) {
+		$category  = Category::find($id);
+		$parent_id = $category->parent_id;
+		if ($parent_id == 0) {
+			$category_id = $category->id;
+		} else {
+			$category_id = $this->getParent($parent_id);
+		}
+		return $category_id;
+	}
+
+}

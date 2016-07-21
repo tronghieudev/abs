@@ -1,0 +1,137 @@
+<?php namespace App\Http\Controllers\Admin;
+
+use App\User;
+use Bican\Roles\Models\Role;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Auth;
+use Validator;
+use Intervention\Image\ImageManagerStatic as Image;
+use Hash;
+
+class UserController extends Controller {
+
+	protected function validator(array $data){
+        return Validator::make($data, [
+            'name' => 'required|max:50',
+            'username' => 'required|max:50|unique:users',
+        ]);
+    }
+
+    public function getLogin() {
+    	return view()->make('admin.modules.login');
+    }
+
+    public function postLogin(Request $request) {
+    	if(Auth::attempt(['username' => $request->username, 'password' => $request->password])) {
+    		$user = Auth::user();
+    		if($user->level() < 4) {
+    			return redirect()->route('admin.getIndex');
+    		}else{
+    			return redirect()->route('admin.logout.getLogout');
+    		}
+    	}else{
+    		return redirect()->route('admin.login.getLogin');
+    	}
+    }
+
+    public function getLogout() {
+    	$user = Auth::user();
+		if($user->level() < 4) {
+	    	Auth::logout();
+	    	return redirect()->route('admin.login.getLogin');
+	    }else{
+	    	return abort(404);
+	    }
+    }
+
+	public function getIndex(){
+		$data = User::all();
+        $role = Role::all();
+		return view()->make('admin.modules.users.index', ['data' => $data, 'role' => $role]);
+	}
+
+	public function getForm(Request $request){
+		if($request->ajax()) {
+
+        }
+	}
+	public function postForm(Request $request) {
+        if($this->validator($request->all())){
+            try{
+        		$user = new User;
+                $input = $request->all();
+                $input['password'] = bcrypt('12345678');
+                $user->fill($input);
+                $user->save();
+                $role = Role::find($input['role']);
+                $user->attachRole($role);
+                return view()->make('admin.modules.users.editUser', ['data' => $user]);
+            } catch (Exception $e) {
+                return redirect()->back()->withInput();
+            }
+        }else{
+            return redirect()->back()->withInput();
+        }
+	}
+
+    public function getEdit(Request $request, $id) {
+        $data = User::find($id);
+        return view()->make('admin.modules.users.editUser', ['data' => $data]);
+    }
+
+    public function postEdit(Request $request, $id) {
+        if($request->ajax()){
+            try{
+                $input = $request->all();
+                $time = strtotime($request->birthday);
+                $input['birthday'] = date('Y-m-d', $time);
+                //dd($input['birthday']);
+                $user = User::find($id);
+                $user->fill($input);
+                $user->save();
+                return $responsive = ['code' => 200,'description' => 'Cập nhật thông tin thành công'];
+            } catch (Exception $e) {
+                return $responsive = ['code' => 500,'description' => 'Cập nhật thông tin không thành công'];
+            }
+        }else{
+            return $responsive = ['code' => 500,'description' => 'Cập nhật thông tin không thành công'];
+        }
+    }
+
+    public function postPass(Request $request, $id) {
+        $rule = [
+            'old_pass' => 'required',
+            'password' => 'required',
+            're_password' => 'required|same:password',
+        ];
+        $user = User::find($id);
+        $input = $request->all();
+        $valid = Validator::make($input, $rule);
+        if($valid->passes() && Hash::check($input['old_pass'], $user->password)){
+            $user->password = bcrypt($input['password']);
+            $user->save();
+            return redirect()->back()->with('messages', 'Đổi mật khẩu thành công');
+        }else{
+           return redirect()->back()->with('messages', 'Đổi mật khẩu không thành công');
+        }
+    }
+
+    public function postImg(Request $request, $id) {
+        try{
+            $user = User::find($id);
+            $img = $user->image;
+            if(!empty($img) && file_exists('public/multimedia/images/users/'.$img)) {
+                unlink('public/multimedia/images/users/'.$img);
+            }
+            $input['images'] = time() .'-'. $request->file('avata')->getClientOriginalName();
+            Image::make($request->file('avata'))->resize(600, 750)->save('public/multimedia/images/users/'.$input['images']);
+            $user->image = $input['images'];
+            $user->save();
+            return redirect()->back()->with('messages', 'Cập nhập ảnh đại diện thành công');
+        } catch (Exception $e) {
+
+        }
+    }
+
+}

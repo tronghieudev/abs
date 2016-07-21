@@ -1,0 +1,93 @@
+<?php namespace App\Http\Controllers\Admin;
+
+use App\Category;
+use App\Helpers\MenuSelect;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Input;
+use Illuminate\Support\Facades\Response;
+use Validator;
+
+class CategoryController extends Controller {
+
+	public function getIndex() {
+		$data     = Category::orderBy('parent_id', 'ASC')->get();
+		$dataMenu = Category::tree();
+		foreach ($data as $key => $value) {
+			$menu          = new MenuSelect();
+			$getMenu[$key] = $menu->getMenu($dataMenu, 'cate', $value->id, ['class' => 'form-control']);
+		}
+		$menuF    = new MenuSelect();
+		$menuForm = $menuF->getMenu($dataMenu, 'parent_id', 0, ['class' => 'form-control category']);
+		return view('admin.modules.categories.index', ['data'           => $data, 'getMenu'           => $getMenu, 'menuForm'           => $menuForm]);
+	}
+
+	public function getForm(Request $request) {
+		if ($request->ajax()) {
+			$id = Input::get('id');
+			if (!empty($id)) {
+				$data = Category::find($id);
+
+				$response = ['description' => 'Chỉnh sửa danh mục', 'data' => $data];
+				return response()->json($response);
+			} else {
+				$response = ['description' => 'Thêm danh mục mới'];
+				return response()->json($response);
+			}
+		}
+	}
+
+	public function postForm() {
+		$input = Input::all();
+		$valid = Validator::make($input, Category::$rules);
+		if ($valid->passes()) {
+			if (!isset($input['id'])) {
+				try {
+					$category = new Category;
+					$category->fill($input);
+					$category->save();
+					return redirect()->route('admin.categories.getIndex')->with('messages', 'Thêm danh mục thành công');
+				} catch (Exception $e) {
+					return redirect()->back()->with('messages', 'Có lỗi trong quá trình thêm danh mục');
+				}
+			} else {
+				try {
+					$category = Category::find($input['id']);
+					$category->fill($input);
+					$category->save();
+					return redirect()->route('admin.categories.getIndex')->with('messages', 'Chỉnh sửa danh mục thành công');
+				} catch (Exception $e) {
+					return redirect()->back()->with('messages', 'Có lỗi trong quá trình sửa danh mục');
+				}
+			}
+		} else {
+			return redirect()->back()->withInput()->with('messages', 'Vui lòng nhập thông tin đầy đủ');
+		}
+	}
+
+	public function getDel(Request $request) {
+		if ($request->ajax()) {
+			try {
+				$id       = Input::get('id');
+				$data     = Category::find($id);
+				$dataMenu = Category::tree();
+				foreach ($dataMenu as $value) {
+					if ($value->id == $id && count($value->children)) {
+						foreach ($value->children as $val) {
+							$update            = Category::find($val->id);
+							$update->parent_id = -1;
+							$update->save();
+						}
+					}
+				}
+				$data->delete();
+				$response = ['description' => 'Xoá danh mục thành công'];
+				return response()->json($response);
+			} catch (Exception $e) {
+				$response = ['description' => 'Xoá không thành công'];
+				return response()->json($response);
+			}
+		}
+	}
+
+}
